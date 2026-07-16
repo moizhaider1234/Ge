@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>$GE — The Grand Exchange: A Story</title>
+<style>
+  :root{
+    --void:#0a0906;
+    --stone:#171410;
+    --stone-2:#211d16;
+    --parchment:#e9dcbd;
+    --parchment-dim:#b9ab8a;
+    --gold:#ffd23f;
+    --gold-deep:#c99400;
+    --teal:#154d4a;
+    --teal-bright:#2f9e8f;
+    --banner:#9c1f1f;
+    --banner-bright:#d4342f;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0; background:var(--void); color:var(--parchment);
+    font-family:'Courier New', ui-monospace, monospace; overflow-x:hidden;
+    background-image:
+      radial-gradient(circle at 15% 20%, rgba(255,255,255,.025) 0, transparent 3%),
+      radial-gradient(circle at 68% 62%, rgba(255,255,255,.02) 0, transparent 4%),
+      repeating-linear-gradient(0deg, rgba(0,0,0,.35) 0 2px, transparent 2px 46px),
+      repeating-linear-gradient(90deg, rgba(0,0,0,.3) 0 2px, transparent 2px 62px);
+    background-size:auto, auto, 100% 46px, 62px 100%;
+  }
+  .stone-tex::before{
+    content:''; position:absolute; inset:0; z-index:0; pointer-events:none; opacity:.55; mix-blend-mode:overlay;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='s'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.045' numOctaves='4' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.28  0 0 0 0 0.23  0 0 0 0 0.16  0 0 0 0.9 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23s)'/%3E%3C/svg%3E");
+    background-size:220px 220px;
+  }
+  h1,h2,h3{ letter-spacing:1px; font-family:'Arial Black','Segoe UI Black',sans-serif; text-transform:lowercase; font-weight:900; }
+  ::selection{ background:var(--gold); color:var(--void); }
+  a{ color:var(--gold); }
+
+  /* progress bar */
+  .progress-bar{ position:fixed; top:0; left:0; height:3px; background:linear-gradient(90deg,var(--teal-bright),var(--gold)); z-index:400; width:0%; transition:width .1s linear; box-shadow:0 0 10px rgba(255,210,63,.6); }
+
+  /* grain */
+  .grain{ pointer-events:none; position:fixed; inset:0; z-index:399; opacity:.05;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    mix-blend-mode:overlay; }
+
+  /* floating particles */
+  .particles{ position:fixed; inset:0; z-index:1; pointer-events:none; overflow:hidden; }
+  .coin-p{ position:absolute; bottom:-40px; font-size:14px; color:var(--gold); opacity:0; text-shadow:0 0 6px rgba(255,210,63,.7);
+    animation-name:floatUp; animation-timing-function:linear; animation-iteration-count:infinite; }
+  @keyframes floatUp{
+    0%{ transform:translateY(0) rotate(0deg); opacity:0; }
+    10%{ opacity:.7; }
+    90%{ opacity:.5; }
+    100%{ transform:translateY(-110vh) rotate(360deg); opacity:0; }
+  }
+
+  /* nav */
+  nav{ position:fixed; top:0; left:0; right:0; z-index:200; display:flex; align-items:center; justify-content:space-between;
+    padding:14px 26px; background:linear-gradient(180deg, rgba(10,9,6,.92), rgba(10,9,6,0)); backdrop-filter:blur(2px); }
+  .brand{ display:flex; align-items:center; gap:10px; }
+  .brand-icon{ width:30px; height:22px; filter:drop-shadow(0 0 6px rgba(255,210,63,.55)); animation:coinspin 4s linear infinite; transform-origin:50% 60%; }
+  @keyframes coinspin{ 0%,100%{ transform:scaleX(1);} 50%{ transform:scaleX(.2);} }
+  .brand-name{ font-size:14px; color:var(--gold); font-weight:700; letter-spacing:2px; }
+  nav ul{ display:flex; gap:22px; list-style:none; margin:0; padding:0; }
+  nav a{ text-decoration:none; color:var(--parchment-dim); font-size:11px; letter-spacing:1.5px; text-transform:uppercase; transition:color .2s; }
+  nav a:hover{ color:var(--gold); }
+  .nav-cta{ border:1.5px solid var(--gold); padding:7px 14px; border-radius:8px; color:var(--gold) !important; background:linear-gradient(160deg,#3a3226,#171410); box-shadow:0 2px 0 var(--gold-deep); }
+  .nav-cta:hover{ box-shadow:0 2px 0 var(--gold-deep), 0 0 14px rgba(255,210,63,.3); }
+
+  /* quest log */
+  .quest-log{ position:fixed; top:90px; right:18px; z-index:180; width:220px;
+    background:linear-gradient(180deg, var(--stone-2), var(--stone)); border:1px solid #000; border-radius:6px;
+    padding:16px 16px 14px; box-shadow:0 14px 40px rgba(0,0,0,.55); transition:transform .3s ease; }
+  .quest-log h4{ margin:0 0 4px; font-size:10px; letter-spacing:2px; color:var(--teal-bright); text-transform:uppercase; font-family:inherit; font-weight:700;}
+  .quest-log .qtitle{ margin:0 0 12px; font-size:13px; color:var(--gold); text-transform:none; letter-spacing:.5px; font-family:'Arial Black',sans-serif; }
+  .quest-log ol{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:9px; }
+  .quest-log li{ display:flex; align-items:flex-start; gap:8px; font-size:11px; color:var(--parchment-dim); line-height:1.4; opacity:.55; transition:opacity .3s, color .3s; }
+  .quest-log li .box{ flex-shrink:0; width:13px; height:13px; border:1px solid var(--parchment-dim); border-radius:2px; margin-top:1px; position:relative; transition:border-color .3s, background .3s; }
+  .quest-log li.active{ opacity:1; color:var(--parchment); }
+  .quest-log li.active .box{ border-color:var(--gold); box-shadow:0 0 8px rgba(255,210,63,.5); }
+  .quest-log li.done{ opacity:.9; color:var(--parchment); }
+  .quest-log li.done .box{ background:var(--gold); border-color:var(--gold); }
+  .quest-log li.done .box::after{ content:''; position:absolute; left:3px; top:0px; width:4px; height:7px; border-right:2px solid var(--void); border-bottom:2px solid var(--void); transform:rotate(40deg); }
+  .quest-toggle{ display:none; }
+  @media (max-width:980px){
+    .quest-log{ width:auto; max-width:52vw; top:auto; bottom:16px; right:16px; padding:10px 12px; transform:translateY(0); }
+    .quest-log ol{ display:none; }
+    .quest-log.expanded ol{ display:flex; }
+    .quest-log .qtitle{ margin-bottom:0; cursor:pointer; }
+    .quest-log.expanded .qtitle{ margin-bottom:10px; }
+    .quest-log h4{ display:none; }
+  }
+
+  /* chapter shell */
+  .chapter{ position:relative; padding:120px 8vw 130px; overflow:hidden; z-index:2; }
+  .chapter-num{ position:absolute; top:-40px; right:2vw; font-size:min(28vw,320px); font-weight:900; color:rgba(255,210,63,.035);
+    font-family:'Arial Black',sans-serif; line-height:1; pointer-events:none; z-index:0; user-select:none; }
+  .kicker{ position:relative; z-index:1; color:var(--teal-bright); font-size:11px; letter-spacing:4px; text-transform:uppercase; display:flex; align-items:center; gap:10px;}
+  .kicker::before{ content:''; width:26px; height:1px; background:var(--teal-bright); }
+
+  .story-line{ position:relative; z-index:1; max-width:680px; opacity:0; transform:translateY(22px); transition:opacity .8s ease, transform .8s ease; }
+  .story-line.in{ opacity:1; transform:translateY(0); }
+
+  /* torn dividers */
+  .torn{ position:relative; height:24px; margin-top:-1px; z-index:3; }
+  .torn.to-void{ background-image:linear-gradient(135deg, transparent 12px, var(--void) 12.5px), linear-gradient(-135deg, transparent 12px, var(--void) 12.5px);
+    background-size:24px 24px; background-repeat:repeat-x; background-position:top; }
+  .torn.to-stone{ background-image:linear-gradient(135deg, transparent 12px, var(--stone) 12.5px), linear-gradient(-135deg, transparent 12px, var(--stone) 12.5px);
+    background-size:24px 24px; background-repeat:repeat-x; background-position:top; }
+  .torn.to-stone2{ background-image:linear-gradient(135deg, transparent 12px, var(--stone-2) 12.5px), linear-gradient(-135deg, transparent 12px, var(--stone-2) 12.5px);
+    background-size:24px 24px; background-repeat:repeat-x; background-position:top; }
+
+  /* CHAPTER I — hero */
+  .chapter-hero{ min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding-top:0;
+    background:radial-gradient(ellipse at 50% 20%, rgba(47,158,143,.10), transparent 55%), radial-gradient(ellipse at 50% 100%, rgba(255,210,63,.08), transparent 60%), var(--void); }
+  .torch-flicker{ position:absolute; inset:0; z-index:0; background:radial-gradient(circle at 50% 30%, rgba(255,178,50,.07), transparent 60%); animation:flicker 3.5s ease-in-out infinite; mix-blend-mode:screen; }
+  @keyframes flicker{ 0%,100%{opacity:.5;} 20%{opacity:.8;} 35%{opacity:.4;} 50%{opacity:.9;} 70%{opacity:.5;} 85%{opacity:.75;} }
+  .eyebrow{ position:relative; z-index:2; font-size:11px; letter-spacing:4px; text-transform:uppercase; color:var(--teal-bright);
+    border:1px solid var(--teal-bright); padding:6px 14px; border-radius:2px; background:rgba(21,77,74,.25); margin-bottom:26px; animation:fadeUp .9s ease both; }
+  .courtyard-scene{ position:absolute; inset:0; width:100%; height:100%; z-index:0; opacity:.9; }
+  .courtyard-scene .crowd-figure{ filter:drop-shadow(0 3px 3px rgba(0,0,0,.5)); }
+  .hero-title{ position:relative; z-index:2; margin:0; font-size:clamp(38px,7.5vw,86px); color:var(--gold);
+    -webkit-text-stroke:2px #000; paint-order:stroke fill;
+    text-shadow:0 0 20px rgba(255,210,63,.65), 0 0 42px rgba(255,210,63,.3), 3px 3px 0 #000; min-height:1.15em; }
+  .hero-title .cursor{ display:inline-block; width:.06em; background:var(--gold); margin-left:4px; animation:blink 1s step-end infinite; }
+  @keyframes blink{ 50%{ opacity:0; } }
+  .hero-sub{ position:relative; z-index:2; color:var(--gold); font-size:clamp(22px,4vw,40px); margin-top:6px; opacity:0; animation:fadeUp 1s 1.4s ease both; font-family:'Arial Black',sans-serif; text-transform:lowercase; font-weight:900;
+    -webkit-text-stroke:1.5px #000; paint-order:stroke fill; text-shadow:0 0 16px rgba(255,210,63,.55), 2px 2px 0 #000;}
+  .hero-tag{ position:relative; z-index:2; max-width:600px; margin:26px auto 0; font-size:14px; line-height:1.8; color:var(--parchment-dim); opacity:0; animation:fadeUp 1s 1.7s ease both; }
+  @keyframes fadeUp{ from{opacity:0; transform:translateY(18px);} to{opacity:1; transform:translateY(0);} }
+  .scroll-cue{ position:absolute; bottom:26px; left:50%; transform:translateX(-50%); z-index:2; color:var(--parchment-dim);
+    font-size:10px; letter-spacing:3px; text-transform:uppercase; display:flex; flex-direction:column; align-items:center; gap:8px; }
+  .scroll-cue .chev{ width:10px; height:10px; border-right:2px solid var(--gold); border-bottom:2px solid var(--gold); transform:rotate(45deg); animation:bob 1.6s ease-in-out infinite; }
+  @keyframes bob{ 0%,100%{ transform:translateY(0) rotate(45deg);} 50%{ transform:translateY(6px) rotate(45deg);} }
+
+  /* CHAPTER II - narrative */
+  .narrative{ max-width:680px; margin:0 auto; display:flex; flex-direction:column; gap:26px; position:relative; z-index:1; }
+  .narrative p{ font-size:clamp(17px,2.4vw,22px); line-height:1.7; color:var(--parchment-dim); margin:0; }
+  .narrative p b{ color:var(--gold); font-weight:700; }
+  .narrative p.closer{ color:var(--parchment); border-left:2px solid var(--gold-deep); padding-left:18px; font-style:italic; }
+
+  /* CHAPTER III - awakening */
+  .awaken-wrap{ position:relative; z-index:1; max-width:720px; margin:0 auto; text-align:center; }
+  .ge-badge{ width:64px; height:64px; margin:18px auto 4px; display:block; filter:drop-shadow(0 0 16px rgba(47,158,143,.35)); }
+  .awaken-wrap h2{ font-size:clamp(30px,5vw,54px); color:var(--parchment); margin:8px 0 14px; }
+  .awaken-wrap h2 em{ color:var(--gold); font-style:normal; }
+  .ca-box{ margin:30px auto 0; display:inline-flex; align-items:center; gap:10px; background:linear-gradient(160deg,#3a3226,#171410); border:1.5px solid var(--gold-deep);
+    padding:10px 10px 10px 18px; border-radius:10px; flex-wrap:wrap; justify-content:center; box-shadow:inset 0 0 14px rgba(0,0,0,.6); }
+  .offer-badge{ width:26px; height:26px; flex-shrink:0; }
+  .ca-box span.label{ color:var(--parchment-dim); font-size:11px; letter-spacing:2px; text-transform:uppercase; }
+  .ca-box code{ color:var(--gold); font-size:12px; word-break:break-all; }
+  .copy-btn{ cursor:pointer; background:var(--gold); color:var(--void); border:none; font-family:inherit; font-weight:700; font-size:11px; letter-spacing:1px;
+    padding:8px 12px; border-radius:2px; text-transform:uppercase; transition:transform .15s, background .15s; }
+  .copy-btn:hover{ background:#fff; transform:translateY(-1px); }
+  .copy-btn:active{ transform:translateY(1px); }
+  .hero-ctas{ display:flex; gap:14px; margin-top:28px; justify-content:center; flex-wrap:wrap; }
+  .btn{ position:relative; padding:16px 30px; border-radius:10px; font-size:13px; letter-spacing:1.5px; text-transform:uppercase; text-decoration:none; font-weight:700;
+    transition:transform .15s, box-shadow .2s; display:inline-block; overflow:hidden; }
+  .btn-primary{ background:linear-gradient(160deg,#3a3226,#171410); color:var(--gold); border:2px solid var(--gold);
+    box-shadow:0 4px 0 var(--gold-deep), 0 0 22px rgba(255,210,63,.3), inset 0 0 14px rgba(0,0,0,.6);
+    text-shadow:0 0 8px rgba(255,210,63,.7), 1px 1px 0 #000; }
+  .btn-primary:hover{ transform:translateY(-2px); box-shadow:0 6px 0 var(--gold-deep), 0 0 30px rgba(255,210,63,.45), inset 0 0 14px rgba(0,0,0,.6); }
+  .btn-primary:active{ transform:translateY(2px); box-shadow:0 1px 0 var(--gold-deep); }
+  .btn-ghost{ background:linear-gradient(160deg,#3a3226,#171410); border:2px solid var(--parchment-dim); color:var(--parchment);
+    box-shadow:0 4px 0 #4a4234, inset 0 0 14px rgba(0,0,0,.6); }
+  .btn-ghost:hover{ border-color:var(--gold); color:var(--gold); box-shadow:0 4px 0 #4a4234, 0 0 18px rgba(255,210,63,.2), inset 0 0 14px rgba(0,0,0,.6); }
+
+  /* ticker */
+  .ticker-wrap{ background:var(--stone); border-top:1px solid #000; border-bottom:1px solid #000; padding:12px 0; overflow:hidden; white-space:nowrap; margin-top:50px; position:relative; z-index:1;}
+  .ticker-track{ display:inline-flex; gap:48px; animation:scroll 26s linear infinite; }
+  .ticker-item{ font-size:12px; letter-spacing:1px; color:var(--parchment-dim); }
+  .ticker-item b{ color:var(--gold); }
+  .ticker-item.up{ color:#7fdc9e; } .ticker-item.down{ color:#e08585; }
+  @keyframes scroll{ from{ transform:translateX(0);} to{ transform:translateX(-50%);} }
+
+  .section-head{ max-width:680px; margin:0 auto 56px; text-align:center; position:relative; z-index:1; }
+  .section-head h2{ font-size:clamp(28px,4vw,44px); margin:12px 0 0; color:var(--parchment); }
+  .section-head h2 em{ color:var(--gold); font-style:normal; }
+  .section-head p{ color:var(--parchment-dim); font-size:14px; line-height:1.7; margin-top:14px; }
+
+  .reveal{ opacity:0; transform:translateY(24px); transition:opacity .7s ease, transform .7s ease; position:relative; z-index:1;}
+  .reveal.in{ opacity:1; transform:translateY(0); }
+
+  /* booth game */
+  .booth{ background:linear-gradient(180deg, var(--stone-2), var(--stone)); border:1px solid #000; border-radius:6px; padding:34px; max-width:840px; margin:0 auto;
+    box-shadow:0 20px 60px rgba(0,0,0,.5), inset 0 0 0 1px rgba(255,255,255,.03); }
+  .booth-top{ display:flex; justify-content:space-between; align-items:flex-start; gap:20px; flex-wrap:wrap; }
+  .item-slot{ display:flex; align-items:center; gap:14px; }
+  .item-icon{ width:56px; height:56px; border-radius:8px; background:linear-gradient(160deg, var(--gold), var(--gold-deep));
+    display:flex; align-items:center; justify-content:center; font-size:26px; box-shadow:inset 0 0 0 2px rgba(0,0,0,.35), 0 0 18px rgba(255,210,63,.25); animation:coinbob 2.6s ease-in-out infinite;}
+  @keyframes coinbob{ 0%,100%{ transform:translateY(0);} 50%{ transform:translateY(-5px);} }
+  .item-name{ font-size:15px; color:var(--parchment); font-weight:700; }
+  .item-sub{ font-size:11px; color:var(--parchment-dim); letter-spacing:1px; }
+  .price-now{ text-align:right; } .price-now .val{ font-size:26px; color:var(--gold); font-weight:700; } .price-now .delta{ font-size:12px; }
+  .delta.up{ color:#7fdc9e; } .delta.down{ color:#e08585; }
+  .chart-area{ margin-top:22px; position:relative; height:160px; } .chart-area svg{ width:100%; height:100%; display:block; }
+  .booth-controls{ display:flex; gap:12px; margin-top:22px; flex-wrap:wrap; }
+  .inline-icon{ width:16px; height:19px; vertical-align:-4px; margin-right:2px; }
+  .btn-icon{ width:20px; height:14px; vertical-align:-2px; margin-right:6px; }
+  .stake-btn{ flex:1; min-width:120px; cursor:pointer; border:1px solid var(--gold-deep); background:rgba(255,210,63,.05); color:var(--gold); font-family:inherit;
+    padding:14px 10px; border-radius:3px; font-weight:700; letter-spacing:1px; font-size:13px; transition:background .15s, transform .1s;
+    display:inline-flex; align-items:center; justify-content:center; }
+  .stake-btn:hover{ background:rgba(255,210,63,.15); } .stake-btn:active{ transform:scale(.97); }
+  .stake-btn.sell{ border-color:var(--banner); color:#ff8c8c; background:rgba(156,31,31,.08); } .stake-btn.sell:hover{ background:rgba(156,31,31,.2); }
+  .wallet-readout{ margin-top:18px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px; font-size:12px; color:var(--parchment-dim); border-top:1px dashed #3a3226; padding-top:14px; }
+  .wallet-readout b{ color:var(--parchment); }
+  .toast-log{ margin-top:10px; height:20px; font-size:11px; color:var(--teal-bright); letter-spacing:.5px; }
+  .game-note{ text-align:center; margin-top:18px; font-size:11px; color:var(--parchment-dim); }
+  .streak-badge{ position:absolute; top:-14px; right:20px; background:var(--gold); color:var(--void); font-size:10px; font-weight:700; letter-spacing:1px;
+    padding:6px 12px; border-radius:20px; box-shadow:0 6px 16px rgba(0,0,0,.4); opacity:0; transform:scale(.6); transition:opacity .25s, transform .25s; }
+  .streak-badge.show{ opacity:1; transform:scale(1); }
+
+  /* steps */
+  .steps{ display:grid; grid-template-columns:repeat(auto-fit, minmax(200px,1fr)); gap:26px; max-width:1100px; margin:0 auto; position:relative; z-index:1;}
+  .step-card{ background:var(--stone); border:1px solid #000; border-radius:6px; padding:26px 22px; text-align:left; position:relative; }
+  .step-oct{ width:44px; height:44px; background:var(--teal); border:2px solid var(--teal-bright);
+    clip-path:polygon(30% 0,70% 0,100% 30%,100% 70%,70% 100%,30% 100%,0 70%,0 30%);
+    display:flex; align-items:center; justify-content:center; font-weight:900; color:var(--gold); font-size:16px; margin-bottom:16px; }
+  .step-card h3{ margin:0 0 8px; font-size:15px; color:var(--parchment); text-transform:none;}
+  .step-card p{ margin:0; font-size:13px; color:var(--parchment-dim); line-height:1.6; }
+
+  /* tokenomics */
+  .tokenomics{ display:flex; gap:40px; flex-wrap:wrap; align-items:center; justify-content:center; max-width:1000px; margin:0 auto; position:relative; z-index:1;}
+  .tokenomics-ring{ position:relative; width:280px; height:280px; flex-shrink:0; }
+  .tokenomics-list{ flex:1; min-width:260px; display:flex; flex-direction:column; gap:14px; }
+  .tok-row{ display:flex; align-items:center; gap:12px; font-size:13px; }
+  .tok-dot{ width:12px; height:12px; border-radius:3px; flex-shrink:0; }
+  .tok-row .name{ flex:1; color:var(--parchment); } .tok-row .pct{ color:var(--gold); font-weight:700; }
+
+  /* roadmap */
+  .roadmap{ max-width:780px; margin:0 auto; position:relative; padding-left:26px; z-index:1;}
+  .roadmap::before{ content:''; position:absolute; left:5px; top:6px; bottom:6px; width:2px; background:linear-gradient(var(--gold-deep), var(--teal-bright)); }
+  .rm-item{ position:relative; padding-bottom:36px; } .rm-item:last-child{ padding-bottom:0; }
+  .rm-item::before{ content:''; position:absolute; left:-26px; top:2px; width:12px; height:12px; border-radius:50%; background:var(--gold);
+    box-shadow:0 0 0 4px var(--void), 0 0 10px var(--gold); }
+  .rm-phase{ font-size:11px; letter-spacing:2px; color:var(--teal-bright); text-transform:uppercase; }
+  .rm-item h3{ margin:6px 0; font-size:16px; color:var(--parchment); text-transform:none;} .rm-item p{ margin:0; font-size:13px; color:var(--parchment-dim); line-height:1.6; }
+
+  /* footer / epilogue */
+  footer{ padding:70px 8vw 40px; text-align:center; border-top:1px solid #1a1710; background:var(--stone-2); position:relative; z-index:1;}
+  footer .epilogue{ max-width:560px; margin:0 auto 34px; color:var(--parchment); font-size:16px; line-height:1.8; font-style:italic; }
+  footer .disclaimer{ max-width:640px; margin:0 auto 26px; font-size:11px; color:#7a7364; line-height:1.7; }
+  footer .flinks{ display:flex; gap:22px; justify-content:center; margin-bottom:20px; flex-wrap:wrap;}
+  footer .flinks a{ color:var(--parchment-dim); font-size:12px; letter-spacing:1px; text-decoration:none; } footer .flinks a:hover{ color:var(--gold); }
+  footer .fine{ font-size:11px; color:#544e40; }
+
+  @media (max-width:720px){
+    nav ul{ display:none; }
+    .booth-top{ flex-direction:column; }
+    .price-now{ text-align:left; }
+    .chapter{ padding:90px 6vw 90px; }
+  }
+
+  /* dancing crowd */
+  .dance-stage{ display:flex; justify-content:center; gap:34px; margin:10px auto 40px; position:relative; z-index:1; }
+  .dance-figure{ width:34px; height:58px; filter:drop-shadow(0 5px 4px rgba(0,0,0,.5)); animation:jig 1s ease-in-out infinite; transform-origin:50% 100%; }
+  .dance-figure.d1{ animation-delay:0s; } .dance-figure.d2{ animation-delay:.15s; }
+  .dance-figure.d3{ animation-delay:.3s; } .dance-figure.d4{ animation-delay:.45s; }
+  @keyframes jig{
+    0%,100%{ transform:rotate(-8deg) translateY(0); }
+    25%{ transform:rotate(6deg) translateY(-6px); }
+    50%{ transform:rotate(-4deg) translateY(0); }
+    75%{ transform:rotate(9deg) translateY(-8px); }
+  }
+
+  /* quest reward scroll */
+  .quest-reward{ display:flex; justify-content:center; margin-bottom:36px; position:relative; z-index:1; }
+  .scroll-card{ background:linear-gradient(180deg,#efe1bb,#d9c795); color:#3a2c14; border:2px solid #8a6a2e; border-radius:10px;
+    padding:22px 30px; max-width:380px; text-align:center; box-shadow:0 14px 34px rgba(0,0,0,.45); }
+  .scroll-title{ font-family:'Arial Black',sans-serif; font-weight:900; font-size:14px; letter-spacing:.5px; margin-bottom:12px; color:#6b4a12; text-transform:none;}
+  .scroll-card ul{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:6px; font-size:13px; }
+
+  /* video easter egg */
+  .video-egg{ display:flex; flex-direction:column; align-items:center; gap:18px; position:relative; z-index:1; }
+  .video-frame{ width:100%; max-width:560px; }
+  .video-frame-inner{ position:relative; width:100%; padding-bottom:56.25%; height:0; border-radius:8px; overflow:hidden;
+    border:2px solid var(--gold-deep); box-shadow:0 16px 40px rgba(0,0,0,.5); }
+  .video-frame-inner iframe{ position:absolute; inset:0; width:100%; height:100%; border:0; }
+  :focus-visible{ outline:2px solid var(--gold); outline-offset:2px; }
+  @media (prefers-reduced-motion: reduce){ *{ animation:none !important; transition:none !important; } }
+</style>
+</head>
+<body>
+
+<div class="grain"></div>
+<div class="progress-bar" id="progressBar"></div>
+<div class="particles" id="particles"></div>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+<defs>
+  <!-- coin stack -->
+  <g id="icon-coinstack">
+    <ellipse cx="16" cy="17" rx="13" ry="5" fill="#8a6a00"/>
+    <ellipse cx="16" cy="15" rx="13" ry="5" fill="#c99400"/>
+    <ellipse cx="16" cy="13" rx="13" ry="5" fill="#ffd23f"/>
+    <ellipse cx="16" cy="13" rx="8.5" ry="3.1" fill="none" stroke="#8a6a00" stroke-width="1"/>
+    <ellipse cx="16" cy="9.4" rx="12" ry="4.6" fill="#ffe17a"/>
+    <ellipse cx="16" cy="9.4" rx="7.8" ry="2.8" fill="none" stroke="#c99400" stroke-width="1"/>
+  </g>
+
+  <!-- ledger / offer note -->
+  <g id="icon-ledger">
+    <rect x="1.5" y="1.5" width="21" height="25" rx="2" fill="#e9dcbd" stroke="#171410" stroke-width="1.5"/>
+    <rect x="5" y="6" width="14" height="2.6" fill="#ffd23f"/>
+    <rect x="5" y="11.4" width="14" height="2.6" fill="#c99400"/>
+    <rect x="5" y="16.8" width="9" height="2.6" fill="#ffd23f"/>
+    <path d="M4 24 q3 -4 7 -1 q3 2.4 8 -1" fill="none" stroke="#154d4a" stroke-width="1.6" stroke-linecap="round"/>
+  </g>
+
+  <!-- GE octagon badge -->
+  <g id="icon-ge-badge">
+    <polygon points="27,4 63,4 86,27 86,63 63,86 27,86 4,63 4,27" fill="#2a241a" stroke="#2f9e8f" stroke-width="4"/>
+    <rect x="34" y="26" width="22" height="34" rx="2" fill="#e9dcbd" stroke="#171410" stroke-width="2"/>
+    <rect x="38" y="46" width="4" height="10" fill="#ffd23f"/>
+    <rect x="44" y="40" width="4" height="16" fill="#c99400"/>
+    <rect x="50" y="33" width="4" height="23" fill="#ffd23f"/>
+    <path d="M30 66 q15 -12 30 0 q4 3 8 1 l2 5 -50 0 z" fill="#c99400" stroke="#171410" stroke-width="1.5"/>
+  </g>
+
+  <!-- trader sprite, purple robe -->
+  <g id="icon-trader-purple">
+    <ellipse cx="10" cy="33" rx="7" ry="2" fill="#000" opacity=".35"/>
+    <path d="M4 32 L5 20 Q5 13 10 13 Q15 13 15 20 L16 32 Z" fill="#4b3a78"/>
+    <rect x="6.5" y="24" width="7" height="4" fill="#3a2c5e"/>
+    <circle cx="10" cy="8.5" r="5" fill="#e8b98a"/>
+    <path d="M5 8 Q5 3 10 3 Q15 3 15 8 L14.5 6.5 Q10 8.5 5.5 6.5 Z" fill="#2a2a2a"/>
+  </g>
+
+  <!-- trader sprite, ranger green -->
+  <g id="icon-trader-green">
+    <ellipse cx="10" cy="33" rx="7" ry="2" fill="#000" opacity=".35"/>
+    <path d="M4 32 L4.5 18 Q4.5 12 10 12 Q15.5 12 15.5 18 L16 32 Z" fill="#2f5c2f"/>
+    <rect x="3.5" y="17" width="13" height="4.5" fill="#1f3f1f"/>
+    <path d="M14 20 L21 13" stroke="#5c3a1e" stroke-width="1.6" stroke-linecap="round"/>
+    <circle cx="10" cy="8" r="5" fill="#e8b98a"/>
+    <path d="M4.5 8 Q4.5 1.5 10 1.5 Q15.5 1.5 15.5 8 Q11 5.5 4.5 8Z" fill="#234d23"/>
+  </g>
+
+  <!-- trader sprite, blue -->
+  <g id="icon-trader-blue">
+    <ellipse cx="10" cy="33" rx="7" ry="2" fill="#000" opacity=".35"/>
+    <path d="M4 32 L5 20 Q5 13 10 13 Q15 13 15 20 L16 32 Z" fill="#2b4d78"/>
+    <rect x="6.5" y="24" width="7" height="4" fill="#1e3a5e"/>
+    <circle cx="10" cy="8.5" r="5" fill="#e8b98a"/>
+    <path d="M5 8 Q5 3 10 3 Q15 3 15 8 L14.5 6.5 Q10 8.5 5.5 6.5 Z" fill="#2a2a2a"/>
+  </g>
+
+  <!-- trader sprite, red -->
+  <g id="icon-trader-red">
+    <ellipse cx="10" cy="33" rx="7" ry="2" fill="#000" opacity=".35"/>
+    <path d="M4 32 L5 20 Q5 13 10 13 Q15 13 15 20 L16 32 Z" fill="#7a2222"/>
+    <rect x="6.5" y="24" width="7" height="4" fill="#5c1818"/>
+    <circle cx="10" cy="8.5" r="5" fill="#c98a5e"/>
+    <path d="M5 8 Q5 3 10 3 Q15 3 15 8 L14.5 6.5 Q10 8.5 5.5 6.5 Z" fill="#1a1a1a"/>
+  </g>
+
+  <!-- circular offer badges -->
+  <g id="icon-badge-dollar">
+    <circle cx="16" cy="16" r="14.5" fill="#5b5b5b" stroke="#232323" stroke-width="2"/>
+    <circle cx="16" cy="16" r="11" fill="#787878"/>
+    <text x="16" y="21.5" text-anchor="middle" font-family="Arial Black, sans-serif" font-size="15" font-weight="900" fill="#f2d24a" stroke="#232323" stroke-width="0.6">$</text>
+  </g>
+  <g id="icon-badge-ledger">
+    <circle cx="16" cy="16" r="14.5" fill="#5b5b5b" stroke="#232323" stroke-width="2"/>
+    <circle cx="16" cy="16" r="11" fill="#787878"/>
+    <rect x="10.5" y="8.5" width="11" height="15" rx="1" fill="#e9dcbd" stroke="#232323" stroke-width="1"/>
+    <rect x="12.3" y="11.5" width="7.4" height="1.7" fill="#c99400"/>
+    <rect x="12.3" y="14.6" width="7.4" height="1.7" fill="#c99400"/>
+    <rect x="12.3" y="17.7" width="4.6" height="1.7" fill="#c99400"/>
+  </g>
+
+  <pattern id="floorTiles" width="58" height="58" patternUnits="userSpaceOnUse">
+    <rect width="58" height="58" fill="#7d7d78"/>
+    <rect width="58" height="58" fill="none" stroke="#5a5a56" stroke-width="3"/>
+  </pattern>
+
+  <linearGradient id="pillarGrad" x1="0" y1="0" x2="1" y2="0">
+    <stop offset="0%" stop-color="#0d0d0c"/>
+    <stop offset="35%" stop-color="#3a3a36"/>
+    <stop offset="55%" stop-color="#47473f"/>
+    <stop offset="100%" stop-color="#0a0a09"/>
+  </linearGradient>
+  <radialGradient id="courtyardVignette" cx="50%" cy="42%" r="65%">
+    <stop offset="0%" stop-color="#0a0906" stop-opacity="0"/>
+    <stop offset="55%" stop-color="#0a0906" stop-opacity=".25"/>
+    <stop offset="100%" stop-color="#0a0906" stop-opacity=".97"/>
+  </radialGradient>
+</defs>
+</svg>
+
+<nav>
+  <div class="brand"><svg class="brand-icon" viewBox="0 0 32 22"><use href="#icon-coinstack"/></svg><div class="brand-name">$GE</div></div>
+  <ul>
+    <li><a href="#ch1">Story</a></li>
+    <li><a href="#ch4">Trade</a></li>
+    <li><a href="#ch6">Tokenomics</a></li>
+    <li><a href="#ch7">Roadmap</a></li>
+  </ul>
+  <a class="nav-cta" href="#ch5">How to Buy</a>
+</nav>
+
+<aside class="quest-log" id="questLog">
+  <div class="qtitle" id="questToggle"><svg class="inline-icon" viewBox="0 0 24 28"><use href="#icon-ledger"/></svg> Quest: The Grand Exchange</div>
+  <h4>Journal</h4>
+  <ol id="questList">
+    <li data-ch="ch1"><div class="box"></div><span>I · Long Before Robinhood</span></li>
+    <li data-ch="ch2"><div class="box"></div><span>II · The Floor Falls Silent</span></li>
+    <li data-ch="ch3"><div class="box"></div><span>III · On-Chain Awakening</span></li>
+    <li data-ch="ch4"><div class="box"></div><span>IV · The Booth Reopens</span></li>
+    <li data-ch="ch5"><div class="box"></div><span>V · Step to the Counter</span></li>
+    <li data-ch="ch6"><div class="box"></div><span>VI · The Ledger</span></li>
+    <li data-ch="ch7"><div class="box"></div><span>VII · The Trading Day</span></li>
+    <li data-ch="ch8"><div class="box"></div><span>✦ · Side Quest</span></li>
+  </ol>
+</aside>
+
+<!-- CHAPTER I : HERO -->
+<section class="chapter chapter-hero" id="ch1">
+  <svg class="courtyard-scene" viewBox="0 0 1000 560" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <rect width="1000" height="560" fill="url(#floorTiles)"/>
+    <polygon points="500,205 565,232 592,300 565,368 500,395 435,368 408,300 435,232"
+      fill="#8a6a42" stroke="#4a3520" stroke-width="7"/>
+    <polygon points="500,215 555,238 578,300 555,362 500,385 445,362 422,300 445,238"
+      fill="#3a2a18"/>
+    <ellipse cx="500" cy="235" rx="88" ry="28" fill="#050505"/>
+    <ellipse cx="500" cy="228" rx="88" ry="28" fill="#2b2b28"/>
+    <rect x="412" y="228" width="176" height="200" fill="url(#pillarGrad)"/>
+    <ellipse cx="500" cy="428" rx="88" ry="24" fill="#161614"/>
+    <g id="crowdRing"></g>
+    <rect width="1000" height="560" fill="url(#courtyardVignette)"/>
+  </svg>
+  <div class="torch-flicker"></div>
+  <span class="eyebrow">chapter i · now loading</span>
+  <h1 class="hero-title" id="typeTarget"></h1>
+  <div class="hero-sub">the grand exchange</div>
+  <p class="hero-tag">Every trader remembers the courtyard. This is the story of how that memory found its way back on-chain.</p>
+  <div class="scroll-cue">scroll to begin<div class="chev"></div></div>
+</section>
+
+<div class="torn to-stone"></div>
+
+<!-- CHAPTER II : NARRATIVE -->
+<section class="chapter" id="ch2" style="background:var(--stone);">
+  <div class="chapter-num">II</div>
+  <span class="kicker">chapter ii</span>
+  <div class="narrative" style="margin-top:26px;">
+    <p class="story-line">Before Robinhood, we had <b>the Grand Exchange</b> — the first marketplace many of us ever learned to trade on.</p>
+    <p class="story-line">Rows of stalls. Rows of prices, ticking up and down. A whole city built on the flip.</p>
+    <p class="story-line"><b>Buy low. Sell high. Flip rares.</b> Watch the market breathe, long before anyone called it a "market."</p>
+    <p class="story-line">Then the servers changed. New apps, new charts, new candles. The courtyard stayed in memory — but the chain never remembered it.</p>
+    <p class="story-line closer">Until now.</p>
+  </div>
+</section>
+
+<div class="torn to-void"></div>
+
+<!-- CHAPTER III : AWAKENING -->
+<section class="chapter" id="ch3" style="background:var(--void);">
+  <div class="chapter-num">III</div>
+  <div class="awaken-wrap">
+    <span class="kicker" style="justify-content:center;">chapter iii</span>
+    <svg class="ge-badge reveal" viewBox="0 0 90 90"><use href="#icon-ge-badge"/></svg>
+    <h2 class="reveal">the courtyard <em>wakes up</em></h2>
+    <p class="reveal" style="color:var(--parchment-dim); font-size:14px; line-height:1.7;">$GE brings that nostalgia on-chain — a living ticker, a trading booth, and a floor that never really closed.</p>
+    <div class="ca-box reveal">
+      <svg class="offer-badge" viewBox="0 0 32 32"><use href="#icon-badge-dollar"/></svg>
+      <svg class="offer-badge" viewBox="0 0 32 32"><use href="#icon-badge-ledger"/></svg>
+      <span class="label">CA</span>
+      <code id="caText">0x46dd294D06EBF31CdEef9d67ed064789C34d1048</code>
+      <button class="copy-btn" onclick="copyCA()" id="copyBtn">Copy</button>
+      <svg class="offer-badge" viewBox="0 0 32 32"><use href="#icon-badge-ledger"/></svg>
+      <svg class="offer-badge" viewBox="0 0 32 32"><use href="#icon-badge-dollar"/></svg>
+    </div>
+    <div class="hero-ctas reveal">
+      <a class="btn btn-primary" href="https://coinbarrel.com/token/0x46dd294D06EBF31CdEef9d67ed064789C34d1048" target="_blank" rel="noopener">Buy $GE</a>
+      <a class="btn btn-ghost" href="#ch4">Play the Booth</a>
+    </div>
+  </div>
+  <div class="ticker-wrap reveal">
+    <div class="ticker-track" id="tickerTrack"></div>
+  </div>
+</section>
+
+<div class="torn to-stone"></div>
+
+<!-- CHAPTER IV : BOOTH GAME -->
+<section class="chapter" id="ch4" style="background:var(--stone);">
+  <div class="chapter-num">IV</div>
+  <span class="kicker">chapter iv · interactive · game mode</span>
+  <div class="section-head" style="margin-top:26px;">
+    <h2>the <em>trading booth</em> reopens</h2>
+    <p>Click buy when it's cheap, sell when it's rich. The price walks on its own — same rhythm as watching a flip on the old exchange. Demo balance only, for fun and flavor.</p>
+  </div>
+  <div class="booth reveal stone-tex" style="position:relative;">
+    <div class="streak-badge" id="streakBadge">🔥 nice flip!</div>
+    <div class="booth-top">
+      <div class="item-slot">
+        <div class="item-icon"><svg viewBox="0 0 32 22" style="width:34px;height:24px;"><use href="#icon-coinstack"/></svg></div>
+        <div><div class="item-name">Grand Exchange Token</div><div class="item-sub">GE · demo market</div></div>
+      </div>
+      <div class="price-now"><div class="val" id="priceVal">120</div><div class="delta up" id="priceDelta">▲ 0.0%</div></div>
+    </div>
+    <div class="chart-area">
+      <svg viewBox="0 0 600 160" preserveAspectRatio="none">
+        <polyline id="chartLine" fill="none" stroke="#ffd23f" stroke-width="2" points=""></polyline>
+        <polygon id="chartFill" fill="url(#chartGrad)" points=""></polygon>
+        <defs><linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#ffd23f" stop-opacity="0.35"/><stop offset="100%" stop-color="#ffd23f" stop-opacity="0"/>
+        </linearGradient></defs>
+      </svg>
+    </div>
+    <div class="booth-controls">
+      <button class="stake-btn" onclick="trade('buy')"><svg class="btn-icon" viewBox="0 0 32 22"><use href="#icon-coinstack"/></svg>Buy the Dip</button>
+      <button class="stake-btn sell" onclick="trade('sell')"><svg class="btn-icon" viewBox="0 0 24 28"><use href="#icon-ledger"/></svg>Sell the Rip</button>
+    </div>
+    <div class="wallet-readout">
+      <span>Demo gold: <b id="goldBal">1,000</b></span>
+      <span>Holding: <b id="tokenBal">0</b> $GE</span>
+      <span>P/L: <b id="plVal">0</b></span>
+    </div>
+    <div class="toast-log" id="toastLog"></div>
+    <div class="game-note">This is a play-money simulation for fun — not a price feed, and not financial advice.</div>
+  </div>
+</section>
+
+<div class="torn to-void"></div>
+
+<!-- CHAPTER V : HOW TO BUY -->
+<section class="chapter" id="ch5" style="background:var(--void);">
+  <div class="chapter-num">V</div>
+  <span class="kicker">chapter v</span>
+  <div class="section-head" style="margin-top:26px;">
+    <h2>step up to the <em>counter</em></h2>
+    <p>Four steps, same as any decentralized exchange — just dressed for the occasion.</p>
+  </div>
+  <div class="steps">
+    <div class="step-card reveal"><div class="step-oct">1</div><h3>Get a wallet</h3><p>Install a wallet that supports the chain $GE lives on, and secure your seed phrase offline.</p></div>
+    <div class="step-card reveal"><div class="step-oct">2</div><h3>Fund it</h3><p>Transfer the native token to your wallet from an exchange or another wallet you control.</p></div>
+    <div class="step-card reveal"><div class="step-oct">3</div><h3>Paste the CA</h3><p>Open your DEX of choice, paste the contract address above, and always double-check it matches.</p></div>
+    <div class="step-card reveal"><div class="step-oct">4</div><h3>Swap for $GE</h3><p>Set your slippage, confirm the swap, and welcome to the exchange floor.</p></div>
+  </div>
+</section>
+
+<div class="torn to-stone2"></div>
+
+<!-- CHAPTER VI : TOKENOMICS -->
+<section class="chapter" id="ch6" style="background:var(--stone-2);">
+  <div class="chapter-num">VI</div>
+  <span class="kicker">chapter vi</span>
+  <div class="section-head" style="margin-top:26px;">
+    <h2>the <em>allocation</em> ledger</h2>
+    <p>Simple, transparent, no hidden stalls.</p>
+  </div>
+  <div class="tokenomics reveal">
+    <div class="tokenomics-ring">
+      <svg viewBox="0 0 100 100" width="280" height="280">
+        <circle cx="50" cy="50" r="40" fill="none" stroke="#171410" stroke-width="14"/>
+        <circle id="ring1" cx="50" cy="50" r="40" fill="none" stroke="#ffd23f" stroke-width="14" stroke-dasharray="0 251" transform="rotate(-90 50 50)"/>
+        <text x="50" y="46" text-anchor="middle" fill="#e9dcbd" font-size="9" font-family="Courier New">TOTAL</text>
+        <text x="50" y="58" text-anchor="middle" fill="#ffd23f" font-size="8" font-family="Courier New">SUPPLY</text>
+      </svg>
+    </div>
+    <div class="tokenomics-list">
+      <div class="tok-row"><div class="tok-dot" style="background:#ffd23f"></div><div class="name">Liquidity pool</div><div class="pct">60%</div></div>
+      <div class="tok-row"><div class="tok-dot" style="background:#2f9e8f"></div><div class="name">Community & rewards</div><div class="pct">20%</div></div>
+      <div class="tok-row"><div class="tok-dot" style="background:#d4342f"></div><div class="name">Marketing</div><div class="pct">12%</div></div>
+      <div class="tok-row"><div class="tok-dot" style="background:#7a7364"></div><div class="name">Team (locked)</div><div class="pct">8%</div></div>
+    </div>
+  </div>
+</section>
+
+<div class="torn to-void"></div>
+
+<!-- CHAPTER VII : ROADMAP -->
+<section class="chapter" id="ch7" style="background:var(--void);">
+  <div class="chapter-num">VII</div>
+  <span class="kicker">chapter vii · final chapter</span>
+  <div class="section-head" style="margin-top:26px;">
+    <h2>the <em>trading day</em></h2>
+    <p>No promises about price. Just the plan for building the exchange floor.</p>
+  </div>
+  <div class="roadmap reveal">
+    <div class="rm-item"><div class="rm-phase">Pre-market</div><h3>Launch & liquidity lock</h3><p>Contract deployed, liquidity added and locked, site and socials live.</p></div>
+    <div class="rm-item"><div class="rm-phase">Opening bell</div><h3>Community & listings</h3><p>Grow the holder base, pursue tracker listings, start community trading events.</p></div>
+    <div class="rm-item"><div class="rm-phase">Midday session</div><h3>Booth game v2</h3><p>Expand the trading-booth demo into a full on-site flipping game with leaderboards.</p></div>
+    <div class="rm-item"><div class="rm-phase">Closing bell</div><h3>Long-term stalls</h3><p>Ongoing partnerships and utility exploration, decided together with the community.</p></div>
+  </div>
+</section>
+
+<div class="torn to-stone2"></div>
+
+<!-- BONUS : SIDE QUEST -->
+<section class="chapter" id="ch8" style="background:var(--stone-2);">
+  <div class="chapter-num">✦</div>
+  <span class="kicker">side quest · optional</span>
+  <div class="section-head" style="margin-top:26px;">
+    <h2>welcome home, <em>fellow adventurer</em></h2>
+    <p>No more dancing for money plox, falling for money doublers, or losing your armor to a trimmer. Don't cross that wildy border just yet — it's time to join the community. We're combining the vast memeability of OSRS with crypto to send this coin to the moon.</p>
+  </div>
+
+  <div class="dance-stage reveal">
+    <svg class="dance-figure d1" viewBox="0 0 20 34"><use href="#icon-trader-green"/></svg>
+    <svg class="dance-figure d2" viewBox="0 0 20 34"><use href="#icon-trader-purple"/></svg>
+    <svg class="dance-figure d3" viewBox="0 0 20 34"><use href="#icon-trader-blue"/></svg>
+    <svg class="dance-figure d4" viewBox="0 0 20 34"><use href="#icon-trader-red"/></svg>
+  </div>
+
+  <div class="quest-reward reveal">
+    <div class="scroll-card">
+      <div class="scroll-title">Quest complete: Gnome Dev</div>
+      <ul>
+        <li>1× our love and admiration ♥</li>
+        <li>1× bronze dagger</li>
+        <li>10,000 XP for being a good sport</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="video-egg reveal">
+    <button class="btn btn-ghost" id="videoToggle" type="button">click to continue</button>
+    <div class="video-frame" id="videoFrame" hidden>
+      <div class="video-frame-inner" id="videoFrameInner"></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p class="epilogue">"The bell rings, the floor fills, and somewhere a trader is still learning to buy low and sell high. The exchange never really closed — it just moved on-chain."</p>
+  <div class="flinks"><a href="https://x.com/GrandExchangeRH" target="_blank" rel="noopener">X / Twitter</a><a href="#">Telegram</a><a href="#">DexScreener</a></div>
+  <p class="disclaimer">$GE is a community memecoin created for entertainment and nostalgia. It has no intrinsic value or guaranteed return, is not an investment product, and nothing here is financial advice. Crypto assets are volatile — only ever risk what you can afford to lose, and do your own research before buying anything.</p>
+  <div class="fine">© 2026 $GE · the grand exchange lives on</div>
+</footer>
+
+<script>
+  /* ---------- video easter egg ---------- */
+  const videoToggle = document.getElementById('videoToggle');
+  if(videoToggle){
+    videoToggle.addEventListener('click', ()=>{
+      const frame = document.getElementById('videoFrame');
+      const inner = document.getElementById('videoFrameInner');
+      if(!inner.querySelector('iframe')){
+        const iframe = document.createElement('iframe');
+        iframe.src = 'https://www.youtube.com/embed/oQoKz6vtOVg?autoplay=1';
+        iframe.title = 'Bonus video';
+        iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+        iframe.allowFullscreen = true;
+        inner.appendChild(iframe);
+      }
+      frame.hidden = false;
+      videoToggle.style.display = 'none';
+    });
+  }
+
+  /* ---------- courtyard crowd ring ---------- */
+  (function(){
+    const ns = 'http://www.w3.org/2000/svg';
+    const ring = document.getElementById('crowdRing');
+    if(!ring) return;
+    const colors = ['icon-trader-purple','icon-trader-green','icon-trader-blue','icon-trader-red'];
+    const cx = 500, cy = 300, count = 22;
+    const figures = [];
+    for(let i=0;i<count;i++){
+      const angle = (i/count)*Math.PI*2 + (Math.random()*0.18 - 0.09);
+      const rad = 148 + Math.random()*46;
+      const x = cx + Math.cos(angle) * rad * 1.32;
+      const y = cy + Math.sin(angle) * rad * 0.62;
+      const scale = 0.85 + ((y - (cy-100)) / 220) * 0.7;
+      figures.push({x,y,scale,color:colors[Math.floor(Math.random()*colors.length)]});
+    }
+    figures.sort((a,b)=>a.y-b.y);
+    figures.forEach(f=>{
+      const use = document.createElementNS(ns,'use');
+      use.setAttribute('href', '#'+f.color);
+      use.setAttribute('class','crowd-figure');
+      const w = 20*f.scale, h = 34*f.scale;
+      use.setAttribute('x', (f.x - w/2).toFixed(1));
+      use.setAttribute('y', (f.y - h).toFixed(1));
+      use.setAttribute('width', w.toFixed(1));
+      use.setAttribute('height', h.toFixed(1));
+      ring.appendChild(use);
+    });
+  })();
+
+  /* ---------- particles ---------- */
+  const pWrap = document.getElementById('particles');
+  const coinSVG = '<svg viewBox="0 0 32 22" style="width:1em;height:.7em;vertical-align:-.05em;"><use href="#icon-coinstack"/></svg>';
+  const coinChars = [coinSVG,'◆','✦'];
+  for(let i=0;i<18;i++){
+    const s = document.createElement('span');
+    s.className = 'coin-p';
+    s.innerHTML = coinChars[Math.floor(Math.random()*coinChars.length)];
+    s.style.left = Math.random()*100 + 'vw';
+    s.style.fontSize = (10 + Math.random()*10) + 'px';
+    const dur = 14 + Math.random()*16;
+    s.style.animationDuration = dur + 's';
+    s.style.animationDelay = (Math.random()*dur) + 's';
+    pWrap.appendChild(s);
+  }
+
+  /* ---------- progress bar ---------- */
+  const progressBar = document.getElementById('progressBar');
+  function updateProgress(){
+    const h = document.documentElement;
+    const scrolled = (h.scrollTop) / (h.scrollHeight - h.clientHeight) * 100;
+    progressBar.style.width = scrolled + '%';
+  }
+  document.addEventListener('scroll', updateProgress, {passive:true});
+  updateProgress();
+
+  /* ---------- typewriter hero title ---------- */
+  const typeTarget = document.getElementById('typeTarget');
+  const fullText = 'welcome to';
+  let ti = 0;
+  function typeHero(){
+    if(ti <= fullText.length){
+      typeTarget.innerHTML = fullText.slice(0,ti) + '<span class="cursor">&nbsp;</span>';
+      ti++;
+      setTimeout(typeHero, 90);
+    } else {
+      typeTarget.innerHTML = fullText;
+    }
+  }
+  typeHero();
+
+  /* ---------- reveal on scroll (generic) ---------- */
+  const revealEls = document.querySelectorAll('.reveal');
+  const io = new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('in'); } });
+  }, {threshold:.15});
+  revealEls.forEach(el=>io.observe(el));
+
+  /* ---------- staggered story-line reveal ---------- */
+  const storyLines = document.querySelectorAll('.story-line');
+  const lineIo = new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{
+      if(e.isIntersecting){
+        const siblings = Array.from(e.target.parentElement.children);
+        const idx = siblings.indexOf(e.target);
+        setTimeout(()=> e.target.classList.add('in'), idx*180);
+        lineIo.unobserve(e.target);
+      }
+    });
+  }, {threshold:.4});
+  storyLines.forEach(el=>lineIo.observe(el));
+
+  /* ---------- quest log tracking ---------- */
+  const questItems = document.querySelectorAll('#questList li');
+  const chapters = document.querySelectorAll('.chapter');
+  const chIo = new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{
+      const li = document.querySelector(`#questList li[data-ch="${e.target.id}"]`);
+      if(!li) return;
+      if(e.isIntersecting){
+        questItems.forEach(q=>q.classList.remove('active'));
+        li.classList.add('active');
+        li.classList.add('done');
+        // mark all previous as done
+        const idx = Array.from(questItems).indexOf(li);
+        questItems.forEach((q,i)=>{ if(i < idx) q.classList.add('done'); });
+      }
+    });
+  }, {threshold:.35});
+  chapters.forEach(c=>chIo.observe(c));
+
+  const questLog = document.getElementById('questLog');
+  document.getElementById('questToggle').addEventListener('click', ()=>{
+    questLog.classList.toggle('expanded');
+  });
+
+  /* ---------- copy CA ---------- */
+  function copyCA(){
+    const text = document.getElementById('caText').innerText;
+    navigator.clipboard.writeText(text).then(()=>{
+      const btn = document.getElementById('copyBtn');
+      const old = btn.innerText;
+      btn.innerText = 'Copied';
+      setTimeout(()=>btn.innerText = old, 1400);
+    });
+  }
+
+  /* ---------- ticker ---------- */
+  const tickerData = [
+    {label:'$GE', val:'120', dir:'up', pct:'+4.2%'},
+    {label:'Party Hat (ref)', val:'2,004b', dir:'up', pct:'+1.1%'},
+    {label:'Twisted Bow (ref)', val:'1,240b', dir:'down', pct:'-0.6%'},
+    {label:'$GE Volume 24h', val:'88.2k', dir:'up', pct:'+12%'},
+    {label:'Holders', val:'3,412', dir:'up', pct:'+38'},
+    {label:'Liquidity', val:'locked', dir:'up', pct:'✓'},
+  ];
+  const track = document.getElementById('tickerTrack');
+  function buildTicker(){
+    const frag = document.createDocumentFragment();
+    for(let r=0;r<2;r++){
+      tickerData.forEach(d=>{
+        const span = document.createElement('span');
+        span.className = 'ticker-item ' + d.dir;
+        span.innerHTML = `${d.label} <b>${d.val}</b> ${d.pct}`;
+        frag.appendChild(span);
+      });
+    }
+    track.appendChild(frag);
+  }
+  buildTicker();
+
+  /* ---------- trading booth mini-game ---------- */
+  let price = 120;
+  let history = Array(40).fill(120);
+  let gold = 1000;
+  let tokens = 0;
+  let avgCost = 0;
+  let winStreak = 0;
+
+  const priceVal = document.getElementById('priceVal');
+  const priceDelta = document.getElementById('priceDelta');
+  const goldBal = document.getElementById('goldBal');
+  const tokenBal = document.getElementById('tokenBal');
+  const plVal = document.getElementById('plVal');
+  const toastLog = document.getElementById('toastLog');
+  const chartLine = document.getElementById('chartLine');
+  const chartFill = document.getElementById('chartFill');
+  const streakBadge = document.getElementById('streakBadge');
+
+  function fmt(n){ return n.toLocaleString(undefined,{maximumFractionDigits:2}); }
+
+  function drawChart(){
+    const w = 600, h = 160, pad = 6;
+    const max = Math.max(...history), min = Math.min(...history);
+    const range = (max - min) || 1;
+    const step = (w) / (history.length - 1);
+    const pts = history.map((v,i)=>{
+      const x = i*step;
+      const y = h - pad - ((v - min)/range) * (h - pad*2);
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    });
+    chartLine.setAttribute('points', pts.join(' '));
+    chartFill.setAttribute('points', `0,${h} ` + pts.join(' ') + ` ${w},${h}`);
+  }
+
+  function tickMarket(){
+    const drift = (Math.random()-0.48) * price * 0.03;
+    price = Math.max(5, price + drift);
+    history.push(price);
+    if(history.length > 40) history.shift();
+    const prev = history[history.length-2] || price;
+    const pctChange = ((price - prev)/prev*100);
+    priceVal.innerText = fmt(price);
+    priceDelta.innerText = (pctChange>=0?'▲ ':'▼ ') + Math.abs(pctChange).toFixed(1) + '%';
+    priceDelta.className = 'delta ' + (pctChange>=0?'up':'down');
+    drawChart();
+    updatePL();
+  }
+
+  function updatePL(){
+    const worth = tokens * price;
+    const cost = tokens * avgCost;
+    const pl = worth - cost;
+    plVal.innerText = (pl>=0?'+':'') + fmt(pl);
+    plVal.style.color = pl>=0 ? '#7fdc9e' : '#e08585';
+  }
+
+  function log(msg){
+    toastLog.innerText = msg;
+    clearTimeout(log._t);
+    log._t = setTimeout(()=>{ toastLog.innerText=''; }, 2200);
+  }
+
+  function showStreak(msg){
+    streakBadge.innerText = msg;
+    streakBadge.classList.add('show');
+    clearTimeout(showStreak._t);
+    showStreak._t = setTimeout(()=> streakBadge.classList.remove('show'), 1600);
+  }
+
+  function trade(side){
+    const qty = 5;
+    if(side === 'buy'){
+      const cost = qty * price;
+      if(gold < cost){ log("Not enough demo gold — sell some first."); return; }
+      gold -= cost;
+      avgCost = ((avgCost*tokens) + cost) / (tokens+qty);
+      tokens += qty;
+      log(`Bought ${qty} $GE at ${fmt(price)}`);
+    } else {
+      if(tokens < qty){ log("Nothing to sell yet — buy first."); return; }
+      const proceeds = qty * price;
+      const costBasis = qty * avgCost;
+      gold += proceeds;
+      tokens -= qty;
+      if(tokens === 0) avgCost = 0;
+      log(`Sold ${qty} $GE at ${fmt(price)}`);
+      if(proceeds > costBasis){
+        winStreak++;
+        if(winStreak >= 2) showStreak(`🔥 ${winStreak} winning flips in a row!`);
+      } else {
+        winStreak = 0;
+      }
+    }
+    goldBal.innerText = fmt(gold);
+    tokenBal.innerText = fmt(tokens);
+    updatePL();
+  }
+
+  drawChart();
+  setInterval(tickMarket, 1400);
+
+  /* ---------- tokenomics ring ---------- */
+  function animateRing(el, targetPct, circumference, delay){
+    setTimeout(()=>{
+      el.style.transition = 'stroke-dasharray 1.4s ease';
+      el.setAttribute('stroke-dasharray', `${(targetPct/100)*circumference} ${circumference}`);
+    }, delay);
+  }
+  const C = 2*Math.PI*40;
+  const ringObs = new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{
+      if(e.isIntersecting){
+        animateRing(document.getElementById('ring1'), 60, C, 0);
+        ringObs.disconnect();
+      }
+    });
+  }, {threshold:.4});
+  ringObs.observe(document.querySelector('.tokenomics-ring'));
+</script>
+
+</body>
+</html>
